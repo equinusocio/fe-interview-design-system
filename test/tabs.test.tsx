@@ -13,6 +13,7 @@ const renderTabs = (
     onValueChange?: (v: string) => void;
     selectedBilling?: boolean;
     withAddon?: boolean;
+    rootAriaLabel?: string;
   } = {},
 ) => {
   const {
@@ -22,6 +23,7 @@ const renderTabs = (
     onValueChange,
     selectedBilling,
     withAddon,
+    rootAriaLabel,
   } = props;
 
   return render(
@@ -30,8 +32,9 @@ const renderTabs = (
       defaultValue={defaultValue}
       value={value}
       onValueChange={onValueChange}
+      aria-label={rootAriaLabel}
     >
-      <Tabs.List aria-label="Settings">
+      <Tabs.List aria-label={rootAriaLabel ? undefined : "Settings"}>
         <Tabs.Tab value="general">General</Tabs.Tab>
         <Tabs.Tab
           value="billing"
@@ -110,6 +113,14 @@ describe("Tabs.Root", () => {
     expect(screen.getByText("Billing panel")).toBeVisible();
   });
 
+  it("prefers defaultValue over Tab selected", async () => {
+    renderTabs({ defaultValue: "goals", selectedBilling: true });
+    await waitFor(() => {
+      expect(screen.getByRole("tab", { name: /goals/i })).toHaveAttribute("aria-selected", "true");
+    });
+    expect(screen.getByText("Goals panel")).toBeVisible();
+  });
+
   it("keeps default-selected tab selectable after switch", async () => {
     const user = userEvent.setup();
     renderTabs({ selectedBilling: true });
@@ -124,6 +135,7 @@ describe("Tabs.Root", () => {
     await user.click(screen.getByRole("tab", { name: /billing/i }));
     expect(screen.getByText("Billing panel")).toBeVisible();
   });
+
   it("falls back to the first tab when no defaultValue or selected", async () => {
     renderTabs({});
     await waitFor(() => {
@@ -134,12 +146,29 @@ describe("Tabs.Root", () => {
     });
     expect(screen.getByText("General panel")).toBeVisible();
   });
+
+  it("forwards Root aria-label to the tablist", () => {
+    renderTabs({ defaultValue: "general", rootAriaLabel: "Account sections" });
+    expect(screen.getByRole("tablist", { name: "Account sections" })).toBeInTheDocument();
+  });
 });
 
 describe("Tabs.List", () => {
   it("exposes tablist with accessible name", () => {
     renderTabs({ defaultValue: "general" });
     expect(screen.getByRole("tablist", { name: "Settings" })).toBeInTheDocument();
+  });
+
+  it("sets horizontal orientation", () => {
+    renderTabs({ defaultValue: "general" });
+    expect(screen.getByRole("tablist")).toHaveAttribute("aria-orientation", "horizontal");
+  });
+
+  it("mounts an aria-hidden indicator for underline", () => {
+    const { container } = renderTabs({ variant: "underline", defaultValue: "general" });
+    const indicator = container.querySelector('[aria-hidden="true"]');
+    expect(indicator).toBeInTheDocument();
+    expect(screen.getByRole("tablist")).toContainElement(indicator as HTMLElement);
   });
 });
 
@@ -150,6 +179,15 @@ describe("Tabs.Tab", () => {
     expect(general).toHaveAttribute("data-variant", "underline");
     expect(general).toHaveAttribute("data-selected", "true");
     expect(general).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("uses roving tabindex on the selected tab only", async () => {
+    renderTabs({ defaultValue: "billing" });
+    await waitFor(() => {
+      expect(screen.getByRole("tab", { name: /billing/i })).toHaveAttribute("tabIndex", "0");
+    });
+    expect(screen.getByRole("tab", { name: /general/i })).toHaveAttribute("tabIndex", "-1");
+    expect(screen.getByRole("tab", { name: /goals/i })).toHaveAttribute("tabIndex", "-1");
   });
 
   it("renders addon after the label", () => {
@@ -181,6 +219,14 @@ describe("Tabs.Panel", () => {
     expect(billing).not.toBeVisible();
     expect(billing.closest("[role='tabpanel']")).toHaveAttribute("hidden");
   });
+
+  it("makes the active panel focusable when it has no focusable descendants", async () => {
+    renderTabs({ defaultValue: "general" });
+    const active = screen.getByText("General panel").closest("[role='tabpanel']");
+    const inactive = screen.getByText("Billing panel").closest("[role='tabpanel']");
+    expect(active).toHaveAttribute("tabIndex", "0");
+    expect(inactive).not.toHaveAttribute("tabIndex");
+  });
 });
 
 describe("Tabs integration", () => {
@@ -201,6 +247,62 @@ describe("Tabs integration", () => {
     expect(screen.getByRole("tab", { name: /billing/i })).toHaveFocus();
     expect(screen.getByRole("tab", { name: /billing/i })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText("Billing panel")).toBeVisible();
+  });
+
+  it("moves selection with ArrowLeft", async () => {
+    const user = userEvent.setup();
+    renderTabs({ defaultValue: "billing" });
+    await waitFor(() => {
+      expect(screen.getByRole("tab", { name: /billing/i })).toHaveAttribute("aria-selected", "true");
+    });
+    screen.getByRole("tab", { name: /billing/i }).focus();
+    await user.keyboard("{ArrowLeft}");
+    expect(screen.getByRole("tab", { name: /general/i })).toHaveFocus();
+    expect(screen.getByRole("tab", { name: /general/i })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("wraps ArrowRight from the last tab to the first", async () => {
+    const user = userEvent.setup();
+    renderTabs({ defaultValue: "goals" });
+    await waitFor(() => {
+      expect(screen.getByRole("tab", { name: /goals/i })).toHaveAttribute("aria-selected", "true");
+    });
+    screen.getByRole("tab", { name: /goals/i }).focus();
+    await user.keyboard("{ArrowRight}");
+    expect(screen.getByRole("tab", { name: /general/i })).toHaveFocus();
+    expect(screen.getByRole("tab", { name: /general/i })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("wraps ArrowLeft from the first tab to the last", async () => {
+    const user = userEvent.setup();
+    renderTabs({ defaultValue: "general" });
+    screen.getByRole("tab", { name: /general/i }).focus();
+    await user.keyboard("{ArrowLeft}");
+    expect(screen.getByRole("tab", { name: /goals/i })).toHaveFocus();
+    expect(screen.getByRole("tab", { name: /goals/i })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("moves to first and last tab with Home and End", async () => {
+    const user = userEvent.setup();
+    renderTabs({ defaultValue: "billing" });
+    await waitFor(() => {
+      expect(screen.getByRole("tab", { name: /billing/i })).toHaveAttribute("aria-selected", "true");
+    });
+    screen.getByRole("tab", { name: /billing/i }).focus();
+    await user.keyboard("{End}");
+    expect(screen.getByRole("tab", { name: /goals/i })).toHaveFocus();
+    expect(screen.getByRole("tab", { name: /goals/i })).toHaveAttribute("aria-selected", "true");
+    await user.keyboard("{Home}");
+    expect(screen.getByRole("tab", { name: /general/i })).toHaveFocus();
+    expect(screen.getByRole("tab", { name: /general/i })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("moves focus from the selected tab into the active panel with Tab", async () => {
+    const user = userEvent.setup();
+    renderTabs({ defaultValue: "general" });
+    screen.getByRole("tab", { name: /general/i }).focus();
+    await user.tab();
+    expect(screen.getByText("General panel").closest("[role='tabpanel']")).toHaveFocus();
   });
 
   it("wires aria-controls between tab and panel", async () => {
@@ -225,5 +327,9 @@ describe("Tabs integration", () => {
       ),
     ).not.toThrow();
     expect(screen.getByText("General panel")).toBeVisible();
+  });
+
+  it("throws when a compound part is used outside Root", () => {
+    expect(() => render(<Tabs.Tab value="x">X</Tabs.Tab>)).toThrow(/Tabs\.Root/);
   });
 });
