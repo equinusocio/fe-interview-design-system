@@ -102,15 +102,12 @@ describe("Tabs.Root", () => {
     expect(screen.getByRole("tab", { name: /billing/i })).toHaveAttribute("aria-selected", "true");
   });
 
-  it("uses Tab selected prop as uncontrolled default", async () => {
+  it("uses Tab selected prop as uncontrolled default on the initial render", () => {
     renderTabs({ selectedBilling: true });
-    await waitFor(() => {
-      expect(screen.getByRole("tab", { name: /billing/i })).toHaveAttribute(
-        "aria-selected",
-        "true",
-      );
-    });
+    expect(screen.getByRole("tab", { name: /billing/i })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: /billing/i })).toHaveAttribute("tabIndex", "0");
     expect(screen.getByText("Billing panel")).toBeVisible();
+    expect(screen.getByText("General panel")).not.toBeVisible();
   });
 
   it("prefers defaultValue over Tab selected", async () => {
@@ -136,15 +133,13 @@ describe("Tabs.Root", () => {
     expect(screen.getByText("Billing panel")).toBeVisible();
   });
 
-  it("falls back to the first tab when no defaultValue or selected", async () => {
+  it("falls back to the first tab on the initial render when no defaultValue or selected", () => {
     renderTabs({});
-    await waitFor(() => {
-      expect(screen.getByRole("tab", { name: /general/i })).toHaveAttribute(
-        "aria-selected",
-        "true",
-      );
-    });
+    expect(screen.getByRole("tab", { name: /general/i })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: /general/i })).toHaveAttribute("tabIndex", "0");
+    expect(screen.getByRole("tab", { name: /billing/i })).toHaveAttribute("tabIndex", "-1");
     expect(screen.getByText("General panel")).toBeVisible();
+    expect(screen.getByText("Billing panel")).not.toBeVisible();
   });
 
   it("forwards Root aria-label to the tablist", () => {
@@ -253,7 +248,10 @@ describe("Tabs integration", () => {
     const user = userEvent.setup();
     renderTabs({ defaultValue: "billing" });
     await waitFor(() => {
-      expect(screen.getByRole("tab", { name: /billing/i })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByRole("tab", { name: /billing/i })).toHaveAttribute(
+        "aria-selected",
+        "true",
+      );
     });
     screen.getByRole("tab", { name: /billing/i }).focus();
     await user.keyboard("{ArrowLeft}");
@@ -286,7 +284,10 @@ describe("Tabs integration", () => {
     const user = userEvent.setup();
     renderTabs({ defaultValue: "billing" });
     await waitFor(() => {
-      expect(screen.getByRole("tab", { name: /billing/i })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByRole("tab", { name: /billing/i })).toHaveAttribute(
+        "aria-selected",
+        "true",
+      );
     });
     screen.getByRole("tab", { name: /billing/i }).focus();
     await user.keyboard("{End}");

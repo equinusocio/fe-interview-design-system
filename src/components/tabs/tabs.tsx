@@ -1,12 +1,21 @@
 import { clsx } from "clsx";
 import type React from "react";
-import { useCallback, useId, useMemo, useRef, useState } from "react";
+import {
+  Children,
+  isValidElement,
+  useCallback,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import styles from "./tabs.module.css";
 import { type TabsContextValue, TabsProvider, type TabsVariant } from "./tabs-context";
 import { TabsList } from "./tabs-list";
 import { TabsPanel } from "./tabs-panel";
-import { TabsTab } from "./tabs-tab";
+import { TabsTab, type TabsTabProps } from "./tabs-tab";
 import { TabsViewport } from "./tabs-viewport";
 
 export type TabsRootProps = React.ComponentPropsWithRef<"div"> & {
@@ -34,6 +43,57 @@ type TabRegistration = {
   selected?: boolean;
 };
 
+type TabSeeds = {
+  first?: string;
+  selected?: string;
+};
+
+const collectTabSeeds = (node: React.ReactNode): TabSeeds => {
+  let first: string | undefined;
+  let selected: string | undefined;
+
+  Children.forEach(node, (child) => {
+    if (!isValidElement(child)) {
+      return;
+    }
+
+    if (child.type === TabsTab) {
+      const tabProps = child.props as TabsTabProps;
+      if (undefined === first) {
+        first = tabProps.value;
+      }
+      if (tabProps.selected && undefined === selected) {
+        selected = tabProps.value;
+      }
+      return;
+    }
+
+    const nestedChildren = (child.props as { children?: React.ReactNode }).children;
+    if (nestedChildren) {
+      const nested = collectTabSeeds(nestedChildren);
+      if (undefined === first) {
+        first = nested.first;
+      }
+      if (undefined === selected) {
+        selected = nested.selected;
+      }
+    }
+  });
+
+  return { first, selected };
+};
+
+const resolveUncontrolledDefault = (
+  children: React.ReactNode,
+  defaultValue: string | undefined,
+): string => {
+  if (undefined !== defaultValue) {
+    return defaultValue;
+  }
+  const seeds = collectTabSeeds(children);
+  return seeds.selected ?? seeds.first ?? "";
+};
+
 const TabsRoot: React.FC<TabsRootProps> = ({
   variant = "pill",
   value: valueProp,
@@ -47,9 +107,15 @@ const TabsRoot: React.FC<TabsRootProps> = ({
 }) => {
   const baseId = useId();
   const isControlled = valueProp !== undefined;
-  const [uncontrolled, setUncontrolled] = useState(defaultValue ?? "");
-  const registryRef = useRef<TabRegistration[]>([]);
   const defaultClaimedRef = useRef(false);
+  const registryRef = useRef<TabRegistration[]>([]);
+  const [uncontrolled, setUncontrolled] = useState(() => {
+    const initial = resolveUncontrolledDefault(children, defaultValue);
+    if (undefined !== defaultValue || "" !== initial) {
+      defaultClaimedRef.current = true;
+    }
+    return initial;
+  });
 
   const value = isControlled ? valueProp : uncontrolled;
 
@@ -63,19 +129,28 @@ const TabsRoot: React.FC<TabsRootProps> = ({
     [isControlled, onValueChange],
   );
 
-  const resolveFirstTabFallback = useCallback(() => {
-    queueMicrotask(() => {
-      if (isControlled || defaultValue !== undefined || defaultClaimedRef.current) {
+  const claimDefault = useCallback(
+    (next: string) => {
+      if (isControlled || undefined !== defaultValue || defaultClaimedRef.current) {
         return;
       }
-      const regs = registryRef.current;
-      const next = regs[0]?.value;
-      if (next) {
-        defaultClaimedRef.current = true;
-        setUncontrolled(next);
-      }
-    });
-  }, [defaultValue, isControlled]);
+      defaultClaimedRef.current = true;
+      setUncontrolled(next);
+    },
+    [defaultValue, isControlled],
+  );
+
+  useLayoutEffect(() => {
+    if (isControlled || undefined !== defaultValue || defaultClaimedRef.current) {
+      return;
+    }
+    const regs = registryRef.current;
+    const selectedReg = regs.find((registration) => registration.selected);
+    const next = selectedReg?.value ?? regs[0]?.value;
+    if (next) {
+      claimDefault(next);
+    }
+  }, [claimDefault, defaultValue, isControlled]);
 
   const registerTab = useCallback(
     (tabValue: string, opts: { selected?: boolean }) => {
@@ -86,20 +161,15 @@ const TabsRoot: React.FC<TabsRootProps> = ({
         registryRef.current.push({ value: tabValue, selected: opts.selected });
       }
 
-      if (!isControlled && defaultValue === undefined && !defaultClaimedRef.current) {
-        if (opts.selected) {
-          defaultClaimedRef.current = true;
-          setUncontrolled(tabValue);
-        } else {
-          resolveFirstTabFallback();
-        }
+      if (opts.selected) {
+        claimDefault(tabValue);
       }
 
       return () => {
         registryRef.current = registryRef.current.filter((r) => r.value !== tabValue);
       };
     },
-    [defaultValue, isControlled, resolveFirstTabFallback],
+    [claimDefault],
   );
 
   const ctx = useMemo<TabsContextValue>(
