@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "authoring-css": {
+      "source": "equinusocio/skills",
+      "sourceType": "github",
+      "skillPath": "skills/authoring-css/SKILL.md",
+      "computedHash": "b5bd127d1683d0dc9419c7c6716d98321cc7196032a08b9d252760c4075ab1b8"
+    },
+    "authoring-react": {
+      "source": "equinusocio/skills",
+      "sourceType": "github",
+      "skillPath": "skills/authoring-react/SKILL.md",
+      "computedHash": "2d95cb5b6bf1eeba389c7b2d15ba6119046270a66578b6e91ed3374fca3b37c4"
+    }
+  }
+}

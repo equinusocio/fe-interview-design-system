@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "command": "/opt/homebrew/bin/tokensave hook-pre-tool-use",
+        "matcher": "Grep|Shell"
+      }
+    ],
+    "stop": [
+      {
+        "command": "/opt/homebrew/bin/tokensave hook-stop"
+      }
+    ],
+    "beforeSubmitPrompt": [
+      {
+        "command": "/opt/homebrew/bin/tokensave hook-prompt-submit"
+      }
+    ]
+  }
+}
