@@ -13,6 +13,13 @@
   /* Room for focus outline (2px) + offset (2px); overflow clips otherwise */
   padding: var(--space-3xs);
   overflow-inline: auto;
+  scroll-snap-type: inline mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   &[data-variant="underline"] {
     gap: var(--space-l);
@@ -46,6 +53,7 @@
   text-box: trim-both cap alphabetic;
   cursor: pointer;
   white-space: nowrap;
+  scroll-snap-align: center;
 
   &:focus {
     outline: none;

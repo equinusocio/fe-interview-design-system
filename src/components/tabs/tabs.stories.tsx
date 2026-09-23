@@ -153,8 +153,12 @@ const overflowTabs = [
 ] as const;
 
 export const HorizontalOverflow: Story = {
-  render: () => (
-    <Tabs.Root variant="pill" defaultValue="overview" aria-label="Workspace sections">
+  args: {
+    variant: "pill",
+    defaultValue: "overview"
+  },
+  render: ({...args}) => (
+    <Tabs.Root {...args} aria-label="Workspace sections" aria-labelledby="workspace-sections-list">
       <Tabs.List aria-label="Workspace sections">
         {overflowTabs.map((label) => (
           <Tabs.Tab key={label} value={label.toLowerCase()}>

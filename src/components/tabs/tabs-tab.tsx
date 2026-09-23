@@ -1,6 +1,6 @@
 import { clsx } from "clsx";
 import type React from "react";
-import { useLayoutEffect } from "react";
+import { useLayoutEffect, useRef } from "react";
 
 import styles from "./tabs.module.css";
 import { panelId, tabId, useTabsContext } from "./tabs-context";
@@ -30,14 +30,32 @@ export const TabsTab: React.FC<TabsTabProps> = ({
   children,
   onClick,
   onKeyDown,
+  ref,
   ...otherProps
 }) => {
   const { baseId, variant, value, setValue, registerTab } = useTabsContext();
   const isSelected = value === tabValue;
   const id = tabId(baseId, tabValue);
   const controls = panelId(baseId, tabValue);
+  const tabRef = useRef<HTMLButtonElement>(null);
 
   useLayoutEffect(() => registerTab(tabValue, { selected }), [registerTab, selected, tabValue]);
+
+  useLayoutEffect(() => {
+    if (!isSelected) {
+      return;
+    }
+    tabRef.current?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, [isSelected]);
+
+  const assignRef = (node: HTMLButtonElement | null) => {
+    tabRef.current = node;
+    if (typeof ref === "function") {
+      ref(node);
+    } else if (ref) {
+      ref.current = node;
+    }
+  };
 
   const activate = () => {
     setValue(tabValue);
@@ -90,9 +108,17 @@ export const TabsTab: React.FC<TabsTabProps> = ({
     }
   };
 
+  const handleClick: React.MouseEventHandler<HTMLButtonElement> = (event) => {
+    onClick?.(event);
+    if (!event.defaultPrevented) {
+      activate();
+    }
+  };
+
   return (
     <button
       {...otherProps}
+      ref={assignRef}
       type="button"
       id={id}
       role="tab"
@@ -103,12 +129,7 @@ export const TabsTab: React.FC<TabsTabProps> = ({
       aria-selected={isSelected}
       aria-controls={controls}
       tabIndex={isSelected ? 0 : -1}
-      onClick={(event) => {
-        onClick?.(event);
-        if (!event.defaultPrevented) {
-          activate();
-        }
-      }}
+      onClick={handleClick}
       onKeyDown={handleKeyDown}
     >
       <span className={styles.Label}>{children}</span>
