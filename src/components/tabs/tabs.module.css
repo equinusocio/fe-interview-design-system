@@ -32,13 +32,14 @@
   margin: 0;
   border: none;
   min-block-size: 2.625rem;
-  padding-block: 0;
-  padding-inline: var(--space-xs);
+  padding: 0;
   font-family: var(--font-family-body), system-ui, sans-serif;
   font-size: var(--font-scale-m);
   font-weight: 600;
-  line-height: var(--font-lh);
+  line-height: 1;
+  color: var(--global-primary);
   background: transparent;
+  text-box: trim-both cap alphabetic;
   cursor: pointer;
   white-space: nowrap;
 
@@ -52,9 +53,10 @@
   }
 
   &[data-variant="pill"] {
+    padding-inline: var(--space-xs);
     border: 1px solid var(--global-muted);
     border-radius: 1e3px;
-    corner-shape: squircle;
+    corner-shape: unset;
 
     &:hover {
       background-color: var(--global-contrast);
@@ -83,7 +85,7 @@
 
   &[data-variant="underline"] {
     position: relative;
-    border-radius: 0;
+    border-radius: var(--space-4xs);
 
     &::after {
       content: "";
@@ -101,7 +103,6 @@
 
     &[data-selected="true"] {
       anchor-name: --tabs-active-tab;
-      color: var(--global-primary);
 
       &::after,
       &:is(:hover, :active)::after {
@@ -120,7 +121,10 @@
   @media (width > 48em) {
     gap: var(--space-2xs);
     min-block-size: 3.125rem;
-    padding-inline: var(--space-s);
+
+    &[data-variant="pill"] {
+      padding-inline: var(--space-s);
+    }
   }
 }
 
