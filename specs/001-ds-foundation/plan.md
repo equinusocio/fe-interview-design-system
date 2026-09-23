@@ -71,14 +71,14 @@ index.html                 # Google Fonts preconnect + stylesheet (+ take-home c
 src/
 ├── index.css              # :root tokens + body + *:focus-visible
 ├── index.tsx              # imports index.css (unchanged entry pattern)
-├── setupTests.ts
+└── setupTests.ts
+test/
 └── tokens.test.ts         # presence checks for required custom properties
 ```
 
 **Structure Decision**: Keep tokens in the existing global entry stylesheet
 (`src/index.css`) per spec FR-001. Font CDN links live in `index.html` for
-performant preconnect. Tests colocated under `src/` per Vitest/`constitution`
-convention (`src/**/*.test.{ts,tsx}`).
+performant preconnect. Tests live under `test/` (dedicated suite folder).
 
 ## Complexity Tracking
 

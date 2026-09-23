@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const tokensCss = readFileSync(
-  resolve(dirname(fileURLToPath(import.meta.url)), "index.css"),
+  resolve(dirname(fileURLToPath(import.meta.url)), "../src/index.css"),
   "utf8",
 );
 

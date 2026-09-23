@@ -1,18 +1,11 @@
 <!--
 Sync Impact Report
-- Version change: (unset scaffold) → 1.0.0
-- Modified principles: N/A (first ratification from placeholders)
-  - [PRINCIPLE_1_NAME] → I. Design-System Reusability
-  - [PRINCIPLE_2_NAME] → II. Accessibility First (NON-NEGOTIABLE)
-  - [PRINCIPLE_3_NAME] → III. Handcrafted Styles
-  - [PRINCIPLE_4_NAME] → IV. Raw React Composition
-  - [PRINCIPLE_5_NAME] → V. Verify with Tests and Stories
+- Version change: 1.0.0 → 1.1.0
+- Modified principles:
+  - V. Verify with Tests and Stories (test path: `test/**/*.test.*`)
 - Added sections:
-  - Core Principles (I–V)
-  - Technology Stack & Constraints
-  - Delivery & Quality Gates
-  - Governance
-- Removed sections: none (scaffold placeholders replaced)
+  - Technology Stack & Constraints → Viewport breakpoint (mobile / desktop)
+- Removed sections: none
 - Follow-up TODOs: none
 -->
 
@@ -53,7 +46,8 @@ SHOULD use CSS custom properties for color, spacing, and typography so variants
 stay consistent. Visual fidelity MUST track the Figma Design System Tabs file.
 
 Rationale: Interview restriction forbids CSS frameworks; Sass is preinstalled
-and is the preferred preprocessor when CSS modules or global sheets need nesting.
+and is the preferred preprocessor when CSS modules or component sheets need
+nesting.
 
 ### IV. Raw React Composition
 
@@ -69,13 +63,14 @@ behavior and API design.
 ### V. Verify with Tests and Stories
 
 Behavior and accessibility contracts MUST be covered by Vitest + Testing Library
-tests under `src/**/*.test.{ts,tsx}`. Storybook MUST showcase variants, Badge
+tests under `test/**/*.test.{ts,tsx}`. Storybook MUST showcase variants, Badge
 integration, and key states so reviewers can evaluate without reading only
 source. Stories live under `src/**/*.stories.*` per existing Storybook config.
 Tests and stories MUST stay aligned with the public component API.
 
 Rationale: Boilerplate ships Vitest, Testing Library, and Storybook; delivery is
 a public repo that shows features clearly for review and pair programming.
+Suites live in a dedicated `test/` directory.
 
 ## Technology Stack & Constraints
 
@@ -86,12 +81,34 @@ The constitution binds work to this boilerplate unless Governance amends it:
 - **UI**: React 19 + React DOM; TypeScript strict (`tsc -b`)
 - **Styles**: handcrafted CSS/SCSS (Sass available); no Tailwind/CSS frameworks
 - **Docs / showcase**: Storybook 10 (`@storybook/react-vite`, addon-docs)
-- **Tests**: Vitest (`jsdom`, `src/setupTests.ts` + jest-dom), Testing Library
+- **Tests**: Vitest (`jsdom`, `src/setupTests.ts` + jest-dom), Testing Library;
+  test files under `test/`
 - **Lint / format**: Biome (`pnpm check` / `pnpm check:fix`)
 - **Design source of truth**:
   [Figma — Design System Home Test — Tabs](https://www.figma.com/design/OclakAGLSXDoMKLFvwLNMP/%F0%9F%92%BB-Design-System-Home-Test---Tabs-Component?node-id=0-1)
 - **Out of scope for stack**: forking the upstream interview template as the
   delivery artifact; delivery MUST be an original public repository link
+
+### Viewport breakpoint (mobile / desktop)
+
+Responsive layout MUST be **mobile-first**. The single project breakpoint:
+
+| Name | Condition | Source |
+|------|-----------|--------|
+| Desktop | `@media (width > 48em)` | 768px ÷ 16 |
+
+- **48em** is the canonical desktop threshold (768px at a 16px root).
+- Components and feature styles MUST reuse this exact condition when a
+  mobile/desktop split is required — do not invent alternate pixel/em cutoffs.
+- MUST NOT publish a `--breakpoint-*` (or similar) CSS custom property for this
+  value: `var()` is invalid in `@media` and `@container` size conditions, so a
+  token cannot drive the query.
+- MUST NOT rely on `html { container: root / normal }` for viewport switching:
+  `normal` does not enable size queries; even with `inline-size` / `size`, the
+  condition still cannot use `var()`.
+- The global foundation sheet (`src/index.css`) MUST NOT own empty/global
+  breakpoint scaffolding; apply `@media (width > 48em)` only where a component
+  or feature actually needs desktop overrides.
 
 Scripts used as quality entrypoints: `pnpm dev`, `pnpm storybook`,
 `pnpm test`, `pnpm tsc`, `pnpm check`, `pnpm build-storybook`.
@@ -130,4 +147,4 @@ non-raw Tabs libraries, or inaccessible patterns MUST be rejected.
 authoring when present under `.agents/skills` / `.claude/skills`; they refine
 practice but MUST NOT contradict this constitution.
 
-**Version**: 1.0.0 | **Ratified**: 2026-09-23 | **Last Amended**: 2026-09-23
+**Version**: 1.1.0 | **Ratified**: 2026-09-23 | **Last Amended**: 2026-09-23

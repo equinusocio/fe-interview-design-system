@@ -61,7 +61,7 @@
 
 > Write the presence suite against the contract list; values MUST NOT be asserted
 
-- [x] T007 [US3] Create presence tests for all required custom properties on `:root` in `src/tokens.test.ts` (import `src/index.css`; assert non-empty `getPropertyValue` per name from `specs/001-ds-foundation/contracts/tokens.md`)
+- [x] T007 [US3] Create presence tests for all required custom properties on `:root` in `test/tokens.test.ts` (read `src/index.css`; assert each required name is declared in `:root`)
 
 **Checkpoint**: Automated presence guard green
 
