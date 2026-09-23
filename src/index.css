@@ -38,5 +38,6 @@ body {
 }
 
 *:focus-visible {
-  outline: var(--global-primary);
+  outline: 2px solid var(--global-primary);
+  outline-offset: 2px;
 }
