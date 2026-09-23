@@ -23,6 +23,7 @@ const REQUIRED_TOKENS = [
   "--global-foreground",
   "--global-background",
   "--global-primary",
+  "--global-muted",
   "--global-contrast",
   "--highlight-green",
   "--highlight-red",

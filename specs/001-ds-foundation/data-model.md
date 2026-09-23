@@ -25,7 +25,7 @@ Ordered steps: `0`, `4xs`, `3xs`, `2xs`, `xs`, `s`, `m`, `l`, `xl`, `2xl`
 
 ## SemanticGlobalColor (collection)
 
-`foreground`, `background`, `primary`, `contrast` → `--global-*`.
+`foreground`, `background`, `primary`, `muted`, `contrast` → `--global-*`.
 
 ## HighlightColor (collection)
 

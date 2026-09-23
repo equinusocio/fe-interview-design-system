@@ -24,7 +24,8 @@ Published surface: CSS custom properties on `:root` (loaded via `src/index.css`)
 | `--global-foreground` | `#1B2134` |
 | `--global-background` | `#FFFFFF` |
 | `--global-primary` | `#1B2134` |
-| `--global-contrast` | `#C4C5CF` |
+| `--global-muted` | `#C4C5CF` |
+| `--global-contrast` | `#F1F1F7` |
 
 ## Highlight colors (`--highlight-*`)
 

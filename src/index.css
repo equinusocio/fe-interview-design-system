@@ -15,7 +15,8 @@
   --global-foreground: #1b2134;
   --global-background: #ffffff;
   --global-primary: #1b2134;
-  --global-contrast: #c4c5cf;
+  --global-muted: #c4c5cf;
+  --global-contrast: #f1f1f7;
 
   /* Highlight colors */
   --highlight-green: #b1ffc7;
