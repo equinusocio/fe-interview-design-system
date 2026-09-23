@@ -1,14 +1,41 @@
 :root {
-  --background: #eee;
-  --content: #222;
+  /* Spacing — Figma Spacings (px → rem, base 16) */
+  --space-0: 0;
+  --space-4xs: 0.125rem;
+  --space-3xs: 0.25rem;
+  --space-2xs: 0.5rem;
+  --space-xs: 0.75rem;
+  --space-s: 1rem;
+  --space-m: 1.25rem;
+  --space-l: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+
+  /* Semantic global colors */
+  --global-foreground: #1b2134;
+  --global-background: #ffffff;
+  --global-primary: #1b2134;
+  --global-contrast: #c4c5cf;
+
+  /* Highlight colors */
+  --highlight-green: #b1ffc7;
+  --highlight-red: #ffbfb1;
+
+  /* Typography */
+  --font-scale-m: 0.875rem;
+  --font-scale-s: 0.75rem;
+  --font-lh: 1.5;
+  --font-family-body: "Inter";
 }
 
 body {
-  background-color: var(--background);
-  color: var(--content);
-  display: grid;
-  font-size: 2rem;
+  background-color: var(--global-background);
+  color: var(--global-foreground);
+  font-family: var(--font-family-body), "system-ui", sans-serif;
   margin: 0;
-  min-height: 100vh;
-  place-content: center;
+  min-block-size: 100dvh;
+}
+
+*:focus-visible {
+  outline: var(--global-primary);
 }
