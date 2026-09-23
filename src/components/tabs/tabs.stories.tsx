@@ -108,3 +108,33 @@ export const BadgeVariantsAsAddon: Story = {
     </Tabs.Root>
   ),
 };
+
+export const Nested: Story = {
+  render: () => (
+    <Tabs.Root variant="pill" aria-label="Workspace">
+      <Tabs.List aria-label="Workspace">
+        <Tabs.Tab value="overview">Overview</Tabs.Tab>
+        <Tabs.Tab value="settings">Settings</Tabs.Tab>
+      </Tabs.List>
+      <Tabs.Viewport>
+        <Tabs.Panel value="overview">Overview content.</Tabs.Panel>
+        <Tabs.Panel value="settings">
+          <Tabs.Root variant="underline" aria-label="Settings sections">
+            <Tabs.List aria-label="Settings sections">
+              <Tabs.Tab value="profile">Profile</Tabs.Tab>
+              <Tabs.Tab value="billing" selected>
+                Billing
+              </Tabs.Tab>
+              <Tabs.Tab value="team">Team</Tabs.Tab>
+            </Tabs.List>
+            <Tabs.Viewport>
+              <Tabs.Panel value="profile">Profile settings.</Tabs.Panel>
+              <Tabs.Panel value="billing">Billing settings.</Tabs.Panel>
+              <Tabs.Panel value="team">Team settings.</Tabs.Panel>
+            </Tabs.Viewport>
+          </Tabs.Root>
+        </Tabs.Panel>
+      </Tabs.Viewport>
+    </Tabs.Root>
+  ),
+};

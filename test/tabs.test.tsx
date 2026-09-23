@@ -142,6 +142,40 @@ describe("Tabs.Root", () => {
     expect(screen.getByText("Billing panel")).not.toBeVisible();
   });
 
+  it("ignores nested Tabs.Tab seeds inside Panel content when resolving the outer default", () => {
+    render(
+      <Tabs.Root>
+        <Tabs.List aria-label="Outer">
+          <Tabs.Tab value="outer-a">Outer A</Tabs.Tab>
+          <Tabs.Tab value="outer-b">Outer B</Tabs.Tab>
+        </Tabs.List>
+        <Tabs.Viewport>
+          <Tabs.Panel value="outer-a">
+            Outer A panel
+            <Tabs.Root>
+              <Tabs.List aria-label="Inner">
+                <Tabs.Tab value="inner-a">Inner A</Tabs.Tab>
+                <Tabs.Tab value="inner-b" selected>
+                  Inner B
+                </Tabs.Tab>
+              </Tabs.List>
+              <Tabs.Viewport>
+                <Tabs.Panel value="inner-a">Inner A panel</Tabs.Panel>
+                <Tabs.Panel value="inner-b">Inner B panel</Tabs.Panel>
+              </Tabs.Viewport>
+            </Tabs.Root>
+          </Tabs.Panel>
+          <Tabs.Panel value="outer-b">Outer B panel</Tabs.Panel>
+        </Tabs.Viewport>
+      </Tabs.Root>,
+    );
+
+    expect(screen.getByRole("tab", { name: "Outer A" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByText("Outer A panel").closest("[role='tabpanel']")).toBeVisible();
+    expect(screen.getByText("Outer B panel").closest("[role='tabpanel']")).not.toBeVisible();
+    expect(screen.getByRole("tab", { name: "Inner B" })).toHaveAttribute("aria-selected", "true");
+  });
+
   it("forwards Root aria-label to the tablist", () => {
     renderTabs({ defaultValue: "general", rootAriaLabel: "Account sections" });
     expect(screen.getByRole("tablist", { name: "Account sections" })).toBeInTheDocument();

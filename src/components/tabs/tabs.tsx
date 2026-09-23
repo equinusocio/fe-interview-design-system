@@ -68,6 +68,11 @@ const collectTabSeeds = (node: React.ReactNode): TabSeeds => {
       return;
     }
 
+    // Panel/Viewport hold content (incl. nested Tabs); nested Root starts its own tree.
+    if (child.type === TabsPanel || child.type === TabsViewport || child.type === TabsRoot) {
+      return;
+    }
+
     const nestedChildren = (child.props as { children?: React.ReactNode }).children;
     if (nestedChildren) {
       const nested = collectTabSeeds(nestedChildren);
