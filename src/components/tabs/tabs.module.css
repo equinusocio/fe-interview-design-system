@@ -1,0 +1,120 @@
+.Root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+}
+
+.List {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2xs);
+
+  &[data-variant="underline"] {
+    border-block-end: 1px solid var(--global-contrast);
+  }
+
+  @media (width > 48em) {
+    gap: var(--space-xs);
+  }
+}
+
+.Tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3xs);
+  box-sizing: border-box;
+  margin: 0;
+  border: none;
+  padding-block: var(--space-2xs);
+  padding-inline: var(--space-xs);
+  font-family: var(--font-family-body), system-ui, sans-serif;
+  font-size: var(--font-scale-m);
+  font-weight: 600;
+  line-height: var(--font-lh);
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &[data-selected="true"] {
+    color: var(--global-foreground);
+  }
+
+  &[data-variant="pill"] {
+    border-radius: var(--space-2xs);
+
+    &[data-selected="true"] {
+      background-color: var(--global-contrast);
+    }
+  }
+
+  &[data-variant="underline"] {
+    border-radius: 0;
+
+    &[data-selected="true"] {
+      anchor-name: --tabs-active-tab;
+    }
+
+    /* Fallback when CSS anchor positioning is unavailable */
+    @supports not (anchor-name: --tabs-active-tab) {
+      &[data-selected="true"] {
+        box-shadow: inset 0 -2px 0 var(--global-primary);
+      }
+    }
+  }
+
+  @media (width > 48em) {
+    gap: var(--space-2xs);
+    padding-block: var(--space-xs);
+    padding-inline: var(--space-s);
+
+    &[data-variant="pill"] {
+      border-radius: var(--space-xs);
+    }
+  }
+}
+
+.Label {
+  display: inline-flex;
+  align-items: center;
+}
+
+.Addon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.Indicator {
+  display: none;
+  pointer-events: none;
+
+  .List[data-variant="underline"] & {
+    @supports (anchor-name: --tabs-active-tab) {
+      display: block;
+      position: absolute;
+      position-anchor: --tabs-active-tab;
+      inset-block-end: 0;
+      inset-inline-start: anchor(start);
+      inline-size: anchor-size(width);
+      block-size: 2px;
+      background-color: var(--global-primary);
+      transition:
+        inset-inline-start 180ms ease,
+        inline-size 180ms ease;
+    }
+  }
+}
+
+.Viewport {
+  display: block;
+}
+
+.Panel {
+  outline: none;
+
+  &[hidden] {
+    display: none;
+  }
+}
