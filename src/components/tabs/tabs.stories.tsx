@@ -138,3 +138,37 @@ export const Nested: Story = {
     </Tabs.Root>
   ),
 };
+
+const overflowTabs = [
+  "Overview",
+  "Analytics",
+  "Audience",
+  "Campaigns",
+  "Billing",
+  "Integrations",
+  "Notifications",
+  "Security",
+  "Team",
+  "Preferences",
+] as const;
+
+export const HorizontalOverflow: Story = {
+  render: () => (
+    <Tabs.Root variant="pill" defaultValue="overview" aria-label="Workspace sections">
+      <Tabs.List aria-label="Workspace sections">
+        {overflowTabs.map((label) => (
+          <Tabs.Tab key={label} value={label.toLowerCase()}>
+            {label}
+          </Tabs.Tab>
+        ))}
+      </Tabs.List>
+      <Tabs.Viewport>
+        {overflowTabs.map((label) => (
+          <Tabs.Panel key={label} value={label.toLowerCase()}>
+            {label} content.
+          </Tabs.Panel>
+        ))}
+      </Tabs.Viewport>
+    </Tabs.Root>
+  ),
+};
