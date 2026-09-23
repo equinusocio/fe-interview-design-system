@@ -29,7 +29,7 @@ A product builder (or future Tabs/Badge author) opens the design system styleshe
 **Acceptance Scenarios**:
 
 1. **Given** the design system styles are loaded, **When** a consumer reads spacing tokens `--space-0` through `--space-2xl`, **Then** each matches the Figma spacing scale converted to rem (base 16).
-2. **Given** the design system styles are loaded, **When** a consumer reads `--global-foreground`, `--global-background`, `--global-primary`, and `--global-contrast`, **Then** values are `#1B2134`, `#FFFFFF`, `#1B2134`, and `#C4C5CF` respectively.
+2. **Given** the design system styles are loaded, **When** a consumer reads `--global-foreground`, `--global-background`, `--global-primary`, `--global-muted`, and `--global-contrast`, **Then** values are `#1B2134`, `#FFFFFF`, `#1B2134`, `#C4C5CF`, and `#F1F1F7` respectively.
 3. **Given** the design system styles are loaded, **When** a consumer reads `--highlight-green` and `--highlight-red`, **Then** values are `#B1FFC7` and `#FFBFB1` respectively.
 4. **Given** the design system styles are loaded, **When** a consumer reads typography tokens, **Then** `--font-scale-m` is `0.875rem` (14px), `--font-scale-s` is `0.75rem` (12px), `--font-lh` is `1.5`, and `--font-family-body` includes Inter.
 
@@ -100,7 +100,8 @@ A maintainer runs the project test suite and gets a failing result if any requir
   - `--global-foreground: #1B2134`
   - `--global-background: #FFFFFF`
   - `--global-primary: #1B2134`
-  - `--global-contrast: #C4C5CF`
+  - `--global-muted: #C4C5CF`
+  - `--global-contrast: #F1F1F7`
 - **FR-004**: System MUST publish highlight colors:
   - `--highlight-green: #B1FFC7`
   - `--highlight-red: #FFBFB1`
@@ -120,14 +121,14 @@ A maintainer runs the project test suite and gets a failing result if any requir
 
 - **Design token**: Named CSS custom property on `:root` with a fixed contract value (spacing, color, or typography).
 - **Spacing scale**: Ordered set of `--space-*` steps sourced from Figma Spacings.
-- **Semantic global color**: `--global-*` role mapped to a hex value for foreground/background/primary/contrast.
+- **Semantic global color**: `--global-*` role mapped to a hex value for foreground/background/primary/muted/contrast.
 - **Highlight color**: `--highlight-*` accent used for status/emphasis (green/red).
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: 100% of required tokens (10 spacing + 4 global + 2 highlight + 4 typography = 20) are available to consumers after styles load.
+- **SC-001**: 100% of required tokens (10 spacing + 5 global + 2 highlight + 4 typography = 21) are available to consumers after styles load.
 - **SC-002**: Spacing and font-size tokens use rem (not px) for all non-zero length values derived from the Figma px sources.
 - **SC-003**: A reviewer can confirm Inter as the body typeface on the entry experience without installing fonts manually, with body foreground/background driven by `--global-*` tokens.
 - **SC-004**: The automated test suite fails within one run if any required token name is missing from `:root` (value correctness is out of scope for automated checks).
