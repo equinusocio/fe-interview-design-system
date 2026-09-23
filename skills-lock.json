@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "a11y": {
+      "source": "equinusocio/skills",
+      "sourceType": "github",
+      "skillPath": "skills/a11y/SKILL.md",
+      "computedHash": "695c881c8fdc8ca7d2bf089c94c6e625f59ee0e75830153912ce2e9230639c6f"
+    },
     "authoring-css": {
       "source": "equinusocio/skills",
       "sourceType": "github",
