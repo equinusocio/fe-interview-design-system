@@ -148,12 +148,13 @@
       display: block;
       position: absolute;
       position-anchor: --tabs-active-tab;
-      inset-block-end: 0;
+      inset-block-end: anchor(end);
       inset-inline-start: anchor(start);
       inline-size: anchor-size(width);
       block-size: 2px;
       background-color: var(--global-primary);
       transition:
+        inset-block-end 180ms ease,
         inset-inline-start 180ms ease,
         inline-size 180ms ease;
     }
