@@ -6,6 +6,7 @@ import { useTabsContext } from "./tabs-context";
 
 export type TabsViewportProps = React.ComponentPropsWithRef<"div">;
 
+/** Layout wrapper around panels. Seed walk skips this node so nested Tabs inside panels stay isolated. */
 export const TabsViewport: React.FC<TabsViewportProps> = ({
   className,
   children,

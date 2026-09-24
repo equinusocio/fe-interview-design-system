@@ -11,6 +11,10 @@ export type TabsPanelProps = Omit<React.ComponentPropsWithRef<"div">, "value"> &
   value: string;
 };
 
+/**
+ * APG `tabpanel`. Shown when `value` matches Root selection.
+ * Inactive panels stay in the tree but `hidden`; active panel is tabbable for in-panel focus.
+ */
 export const TabsPanel: React.FC<TabsPanelProps> = ({
   value: panelValue,
   className,

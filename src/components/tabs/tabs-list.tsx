@@ -6,6 +6,10 @@ import { useTabsContext } from "./tabs-context";
 
 export type TabsListProps = React.ComponentPropsWithRef<"div">;
 
+/**
+ * APG `tablist`. Label comes from this node, else Root `aria-label` / `aria-labelledby`.
+ * Underline variant paints a shared indicator track; CSS positions it on the selected tab.
+ */
 export const TabsList: React.FC<TabsListProps> = ({
   className,
   children,

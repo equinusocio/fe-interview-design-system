@@ -22,6 +22,10 @@ export type TabsTabProps = Omit<React.ComponentPropsWithRef<"button">, "value"> 
   addon?: React.ReactNode;
 };
 
+/**
+ * APG `tab`. Roving `tabIndex`: selected = 0, others = -1.
+ * `aria-controls` / `id` pair this control with its panel via shared `value`.
+ */
 export const TabsTab: React.FC<TabsTabProps> = ({
   value: tabValue,
   selected = false,
@@ -39,8 +43,10 @@ export const TabsTab: React.FC<TabsTabProps> = ({
   const controls = panelId(baseId, tabValue);
   const tabRef = useRef<HTMLButtonElement>(null);
 
+  /** Register (and unregister) so Root can seed selection when children were not walkable. */
   useLayoutEffect(() => registerTab(tabValue, { selected }), [registerTab, selected, tabValue]);
 
+  /** Keep the active tab visible in an overflowing list. */
   useLayoutEffect(() => {
     if (!isSelected) {
       return;
@@ -48,6 +54,7 @@ export const TabsTab: React.FC<TabsTabProps> = ({
     tabRef.current?.scrollIntoView({ inline: "center", block: "nearest" });
   }, [isSelected]);
 
+  /** Merge consumer `ref` with the internal node used for scroll-into-view. */
   const assignRef = (node: HTMLButtonElement | null) => {
     tabRef.current = node;
     if (typeof ref === "function") {
@@ -61,6 +68,10 @@ export const TabsTab: React.FC<TabsTabProps> = ({
     setValue(tabValue);
   };
 
+  /**
+   * APG tabs keyboard: arrows wrap, Home/End jump ends.
+   * Focus + selection move together; `data-value` on each tab is the selection key.
+   */
   const handleKeyDown: React.KeyboardEventHandler<HTMLButtonElement> = (event) => {
     onKeyDown?.(event);
     if (event.defaultPrevented) {

@@ -38,16 +38,26 @@ export type TabsRootProps = React.ComponentPropsWithRef<"div"> & {
   onValueChange?: (value: string) => void;
 };
 
+/** Tab that mounted into Root: `value` plus optional `selected` seed. */
 type TabRegistration = {
   value: string;
   selected?: boolean;
 };
 
+/**
+ * First-pass defaults from the React tree before tabs have registered.
+ * `selected` wins over `first` when a Tab sets `selected`.
+ */
 type TabSeeds = {
   first?: string;
   selected?: string;
 };
 
+/**
+ * Walks children to pick an uncontrolled start value on the first render.
+ * Skips Panel/Viewport/nested Root so inner Tabs trees do not leak into this Root.
+ * Recurses through layout wrappers (e.g. List) that still contain Tab children.
+ */
 const collectTabSeeds = (node: React.ReactNode): TabSeeds => {
   let first: string | undefined;
   let selected: string | undefined;
@@ -68,7 +78,6 @@ const collectTabSeeds = (node: React.ReactNode): TabSeeds => {
       return;
     }
 
-    // Panel/Viewport hold content (incl. nested Tabs); nested Root starts its own tree.
     if (child.type === TabsPanel || child.type === TabsViewport || child.type === TabsRoot) {
       return;
     }
@@ -88,6 +97,13 @@ const collectTabSeeds = (node: React.ReactNode): TabSeeds => {
   return { first, selected };
 };
 
+/**
+ * Uncontrolled initial value, in order:
+ * 1. `defaultValue` on Root
+ * 2. first Tab with `selected`
+ * 3. first Tab in tree
+ * 4. empty string until a Tab registers and claims the default
+ */
 const resolveUncontrolledDefault = (
   children: React.ReactNode,
   defaultValue: string | undefined,
@@ -99,6 +115,11 @@ const resolveUncontrolledDefault = (
   return seeds.selected ?? seeds.first ?? "";
 };
 
+/**
+ * Compound root: holds selection, tab registry, and shared ids.
+ * `value` = controlled; `defaultValue` / Tab `selected` / first Tab = uncontrolled.
+ * `aria-label` / `aria-labelledby` on Root are forwarded to List as the tablist name.
+ */
 const TabsRoot: React.FC<TabsRootProps> = ({
   variant = "pill",
   value: valueProp,
@@ -110,9 +131,12 @@ const TabsRoot: React.FC<TabsRootProps> = ({
   "aria-labelledby": ariaLabelledBy,
   ...otherProps
 }) => {
+  /** Prefix for `tabId` / `panelId` so tab ↔ panel pairing stays unique per Root. */
   const baseId = useId();
   const isControlled = valueProp !== undefined;
+  /** Once true, later Tab mounts must not overwrite the initial selection. */
   const defaultClaimedRef = useRef(false);
+  /** Mounted tabs, in registration order. Fallback when the children walk found nothing. */
   const registryRef = useRef<TabRegistration[]>([]);
   const [uncontrolled, setUncontrolled] = useState(() => {
     const initial = resolveUncontrolledDefault(children, defaultValue);
@@ -134,6 +158,10 @@ const TabsRoot: React.FC<TabsRootProps> = ({
     [isControlled, onValueChange],
   );
 
+  /**
+   * First-come default for uncontrolled Root with no `defaultValue`.
+   * Used when Tab registers with `selected`, or when layout-effect picks from the registry.
+   */
   const claimDefault = useCallback(
     (next: string) => {
       if (isControlled || undefined !== defaultValue || defaultClaimedRef.current) {
@@ -145,6 +173,10 @@ const TabsRoot: React.FC<TabsRootProps> = ({
     [defaultValue, isControlled],
   );
 
+  /**
+   * After paint, if still no default: prefer a registered `selected` Tab, else the first registered Tab.
+   * Covers Tabs that were not visible to `collectTabSeeds` on the initial children walk.
+   */
   useLayoutEffect(() => {
     if (isControlled || undefined !== defaultValue || defaultClaimedRef.current) {
       return;
@@ -157,6 +189,10 @@ const TabsRoot: React.FC<TabsRootProps> = ({
     }
   }, [claimDefault, defaultValue, isControlled]);
 
+  /**
+   * Each Tab mounts here; unmount filter keeps the registry current.
+   * A Tab with `selected` claims the uncontrolled default immediately.
+   */
   const registerTab = useCallback(
     (tabValue: string, opts: { selected?: boolean }) => {
       const existing = registryRef.current.findIndex((r) => r.value === tabValue);
@@ -200,6 +236,7 @@ const TabsRoot: React.FC<TabsRootProps> = ({
   );
 };
 
+/** Compound API: `Tabs.Root` + `List` / `Tab` / `Viewport` / `Panel`. */
 export const Tabs = {
   Root: TabsRoot,
   List: TabsList,
