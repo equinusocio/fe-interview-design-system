@@ -44,6 +44,7 @@ const PlaceholderGrid: React.FC<PlaceholderGridProps> = ({ count = 6 }) => (
     aria-hidden="true"
   >
     {Array.from({ length: count }, (_, index) => (
+      // biome-ignore lint/suspicious/noArrayIndexKey: static placeholder tiles
       <div key={index} style={{ ...placeholderSurface, minBlockSize: "4.5rem" }} />
     ))}
   </div>
@@ -67,6 +68,7 @@ const PlaceholderList: React.FC<PlaceholderListProps> = ({ count = 5 }) => (
     aria-hidden="true"
   >
     {Array.from({ length: count }, (_, index) => (
+      // biome-ignore lint/suspicious/noArrayIndexKey: static placeholder rows
       <div key={index} style={{ ...placeholderSurface, minBlockSize: "2.5rem" }} />
     ))}
   </div>
@@ -102,6 +104,25 @@ export const Pill: Story = {
 export const Underline: Story = {
   render: () => (
     <Tabs.Root variant="underline" defaultValue="general">
+      <Tabs.List aria-label="Settings">
+        <Tabs.Tab value="general">General</Tabs.Tab>
+        <Tabs.Tab value="billing">Billing</Tabs.Tab>
+        <Tabs.Tab value="goals">Goals</Tabs.Tab>
+      </Tabs.List>
+      <DemoPanels />
+    </Tabs.Root>
+  ),
+};
+
+export const AutoAdvanceUnderline: Story = {
+  render: () => (
+    <Tabs.Root
+      variant="underline"
+      defaultValue="general"
+      autoAdvance
+      autoAdvanceInterval={4000}
+      aria-label="Settings"
+    >
       <Tabs.List aria-label="Settings">
         <Tabs.Tab value="general">General</Tabs.Tab>
         <Tabs.Tab value="billing">Billing</Tabs.Tab>
@@ -230,11 +251,7 @@ export const HorizontalOverflow: Story = {
     defaultValue: "overview",
   },
   render: ({ ...args }) => (
-    <Tabs.Root
-      {...args}
-      aria-label="Workspace sections"
-      aria-labelledby="workspace-sections-list"
-    >
+    <Tabs.Root {...args} aria-label="Workspace sections" aria-labelledby="workspace-sections-list">
       <Tabs.List aria-label="Workspace sections">
         {overflowTabs.map((label) => (
           <Tabs.Tab key={label} value={label.toLowerCase()}>

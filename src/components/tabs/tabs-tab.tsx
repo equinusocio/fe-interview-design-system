@@ -37,26 +37,42 @@ export const TabsTab: React.FC<TabsTabProps> = ({
   ref,
   ...otherProps
 }) => {
-  const { baseId, variant, value, setValue, registerTab } = useTabsContext();
+  const {
+    baseId,
+    variant,
+    value,
+    setValue,
+    registerTab,
+    setTabElement,
+    moveSelectionFromKeyboard,
+  } = useTabsContext();
   const isSelected = value === tabValue;
   const id = tabId(baseId, tabValue);
   const controls = panelId(baseId, tabValue);
   const tabRef = useRef<HTMLButtonElement>(null);
+  const { disabled, ...buttonProps } = otherProps;
 
   /** Register (and unregister) so Root can seed selection when children were not walkable. */
-  useLayoutEffect(() => registerTab(tabValue, { selected }), [registerTab, selected, tabValue]);
+  useLayoutEffect(
+    () => registerTab(tabValue, { selected, disabled: Boolean(disabled) }),
+    [disabled, registerTab, selected, tabValue],
+  );
 
   /** Keep the active tab visible in an overflowing list. */
   useLayoutEffect(() => {
     if (!isSelected) {
       return;
     }
-    tabRef.current?.scrollIntoView({ inline: "center", block: "nearest" });
+    const node = tabRef.current;
+    if (node && "function" === typeof node.scrollIntoView) {
+      node.scrollIntoView({ inline: "center", block: "nearest" });
+    }
   }, [isSelected]);
 
-  /** Merge consumer `ref` with the internal node used for scroll-into-view. */
+  /** Merge consumer `ref` with the internal node used for scroll-into-view and Root focus. */
   const assignRef = (node: HTMLButtonElement | null) => {
     tabRef.current = node;
+    setTabElement(tabValue, node);
     if (typeof ref === "function") {
       ref(node);
     } else if (ref) {
@@ -70,7 +86,7 @@ export const TabsTab: React.FC<TabsTabProps> = ({
 
   /**
    * APG tabs keyboard: arrows wrap, Home/End jump ends.
-   * Focus + selection move together; `data-value` on each tab is the selection key.
+   * Focus + selection move together via Root registry (no tablist DOM queries).
    */
   const handleKeyDown: React.KeyboardEventHandler<HTMLButtonElement> = (event) => {
     onKeyDown?.(event);
@@ -78,44 +94,8 @@ export const TabsTab: React.FC<TabsTabProps> = ({
       return;
     }
 
-    const list = event.currentTarget.closest('[role="tablist"]');
-    if (!list) {
-      return;
-    }
-    const tabs = [...list.querySelectorAll<HTMLElement>('[role="tab"]')];
-    const index = tabs.indexOf(event.currentTarget);
-    if (index < 0 || tabs.length === 0) {
-      return;
-    }
-
-    let nextIndex: number | null = null;
-    switch (event.key) {
-      case "ArrowRight":
-        nextIndex = (index + 1) % tabs.length;
-        break;
-      case "ArrowLeft":
-        nextIndex = (index - 1 + tabs.length) % tabs.length;
-        break;
-      case "Home":
-        nextIndex = 0;
-        break;
-      case "End":
-        nextIndex = tabs.length - 1;
-        break;
-      default:
-        break;
-    }
-
-    if (nextIndex === null) {
-      return;
-    }
-
-    event.preventDefault();
-    const next = tabs[nextIndex];
-    next?.focus();
-    const nextValue = next?.dataset.value;
-    if (nextValue) {
-      setValue(nextValue);
+    if (moveSelectionFromKeyboard(tabValue, event.key)) {
+      event.preventDefault();
     }
   };
 
@@ -128,7 +108,8 @@ export const TabsTab: React.FC<TabsTabProps> = ({
 
   return (
     <button
-      {...otherProps}
+      {...buttonProps}
+      disabled={disabled}
       ref={assignRef}
       type="button"
       id={id}

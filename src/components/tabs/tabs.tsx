@@ -4,6 +4,7 @@ import {
   Children,
   isValidElement,
   useCallback,
+  useEffect,
   useId,
   useLayoutEffect,
   useMemo,
@@ -11,12 +12,19 @@ import {
   useState,
 } from "react";
 
+import {
+  type AutoAdvanceTabRegistration,
+  nextEnabledTabValue,
+  resolveAutoAdvanceInterval,
+} from "./auto-advance";
 import styles from "./tabs.module.css";
+import { TabsAutoAdvanceChrome } from "./tabs-auto-advance-chrome";
 import { type TabsContextValue, TabsProvider, type TabsVariant } from "./tabs-context";
 import { TabsList } from "./tabs-list";
 import { TabsPanel } from "./tabs-panel";
 import { TabsTab, type TabsTabProps } from "./tabs-tab";
 import { TabsViewport } from "./tabs-viewport";
+import { usePrefersReducedMotion } from "./use-prefers-reduced-motion";
 
 export type TabsRootProps = React.ComponentPropsWithRef<"div"> & {
   /**
@@ -36,12 +44,21 @@ export type TabsRootProps = React.ComponentPropsWithRef<"div"> & {
    * Called when the selected tab value changes.
    */
   onValueChange?: (value: string) => void;
+  /**
+   * Opt-in automatic tab stepping. Applies only to the underline variant when reduced motion is not preferred.
+   * @defaultValue false
+   */
+  autoAdvance?: boolean;
+  /**
+   * Wait between automatic steps, in milliseconds.
+   * @defaultValue 2000
+   */
+  autoAdvanceInterval?: number;
 };
 
-/** Tab that mounted into Root: `value` plus optional `selected` seed. */
-type TabRegistration = {
-  value: string;
-  selected?: boolean;
+/** Tab that mounted into Root: value, optional seed, and button node for focus. */
+type TabRegistration = AutoAdvanceTabRegistration & {
+  element: HTMLButtonElement | null;
 };
 
 /**
@@ -125,6 +142,8 @@ const TabsRoot: React.FC<TabsRootProps> = ({
   value: valueProp,
   defaultValue,
   onValueChange,
+  autoAdvance = false,
+  autoAdvanceInterval,
   className,
   children,
   "aria-label": ariaLabel,
@@ -147,8 +166,23 @@ const TabsRoot: React.FC<TabsRootProps> = ({
   });
 
   const value = isControlled ? valueProp : uncontrolled;
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const chromeActive = autoAdvance && "underline" === variant && !prefersReducedMotion;
+  const resolvedInterval = resolveAutoAdvanceInterval(autoAdvanceInterval);
+  const [playback, setPlayback] = useState<"running" | "paused">("running");
+  const [remainingMs, setRemainingMs] = useState(resolvedInterval);
+  const [cycleKey, setCycleKey] = useState(0);
+  const remainingRef = useRef(resolvedInterval);
+  const playbackRef = useRef(playback);
+  const chromeActiveRef = useRef(chromeActive);
+  const resolvedIntervalRef = useRef(resolvedInterval);
+  const valueRef = useRef(value);
+  playbackRef.current = playback;
+  chromeActiveRef.current = chromeActive;
+  resolvedIntervalRef.current = resolvedInterval;
+  valueRef.current = value;
 
-  const setValue = useCallback(
+  const applySelection = useCallback(
     (next: string) => {
       if (!isControlled) {
         setUncontrolled(next);
@@ -157,6 +191,79 @@ const TabsRoot: React.FC<TabsRootProps> = ({
     },
     [isControlled, onValueChange],
   );
+
+  const restartWait = useCallback(() => {
+    remainingRef.current = resolvedIntervalRef.current;
+    setRemainingMs(resolvedIntervalRef.current);
+    setCycleKey((key) => key + 1);
+  }, []);
+
+  const setValue = useCallback(
+    (next: string) => {
+      applySelection(next);
+      if (chromeActiveRef.current && "running" === playbackRef.current) {
+        restartWait();
+      }
+    },
+    [applySelection, restartWait],
+  );
+
+  const handlePause = () => {
+    setPlayback("paused");
+  };
+
+  const handlePlay = () => {
+    remainingRef.current = resolvedIntervalRef.current;
+    setRemainingMs(resolvedIntervalRef.current);
+    setPlayback("running");
+    setCycleKey((key) => key + 1);
+  };
+
+  useEffect(() => {
+    if (!chromeActive) {
+      return;
+    }
+
+    setPlayback("running");
+    remainingRef.current = resolvedInterval;
+    setRemainingMs(resolvedInterval);
+    setCycleKey((key) => key + 1);
+  }, [chromeActive, resolvedInterval]);
+
+  useEffect(() => {
+    if (!chromeActive || "paused" === playback) {
+      return;
+    }
+
+    const from = remainingRef.current > 0 ? remainingRef.current : resolvedIntervalRef.current;
+    const startedAt = Date.now();
+    const waitGeneration = cycleKey;
+
+    const intervalId = window.setInterval(() => {
+      const left = Math.max(0, from - (Date.now() - startedAt));
+      remainingRef.current = left;
+      setRemainingMs(left);
+    }, 50);
+
+    const timeoutId = window.setTimeout(() => {
+      window.clearInterval(intervalId);
+      if (waitGeneration !== cycleKey) {
+        return;
+      }
+      const next = nextEnabledTabValue(registryRef.current, valueRef.current);
+      if (undefined !== next && next !== valueRef.current) {
+        applySelection(next);
+      }
+      remainingRef.current = resolvedIntervalRef.current;
+      setRemainingMs(resolvedIntervalRef.current);
+      setCycleKey((key) => key + 1);
+    }, from);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      window.clearInterval(intervalId);
+    };
+  }, [applySelection, chromeActive, playback, cycleKey]);
 
   /**
    * First-come default for uncontrolled Root with no `defaultValue`.
@@ -194,12 +301,23 @@ const TabsRoot: React.FC<TabsRootProps> = ({
    * A Tab with `selected` claims the uncontrolled default immediately.
    */
   const registerTab = useCallback(
-    (tabValue: string, opts: { selected?: boolean }) => {
+    (tabValue: string, opts: { selected?: boolean; disabled?: boolean }) => {
       const existing = registryRef.current.findIndex((r) => r.value === tabValue);
       if (existing >= 0) {
-        registryRef.current[existing] = { value: tabValue, selected: opts.selected };
+        const previous = registryRef.current[existing];
+        registryRef.current[existing] = {
+          value: tabValue,
+          selected: opts.selected,
+          disabled: opts.disabled,
+          element: previous?.element ?? null,
+        };
       } else {
-        registryRef.current.push({ value: tabValue, selected: opts.selected });
+        registryRef.current.push({
+          value: tabValue,
+          selected: opts.selected,
+          disabled: opts.disabled,
+          element: null,
+        });
       }
 
       if (opts.selected) {
@@ -213,6 +331,78 @@ const TabsRoot: React.FC<TabsRootProps> = ({
     [claimDefault],
   );
 
+  /** Keep the button instance on the registry so keyboard can focus without querying the DOM. */
+  const setTabElement = useCallback((tabValue: string, element: HTMLButtonElement | null) => {
+    const existing = registryRef.current.findIndex((r) => r.value === tabValue);
+    if (existing < 0) {
+      // Ref may commit before registerTab's layout effect; do not resurrect after unregister.
+      if (!element) {
+        return;
+      }
+      registryRef.current.push({
+        value: tabValue,
+        element,
+      });
+      return;
+    }
+
+    const previous = registryRef.current[existing];
+    if (!previous) {
+      return;
+    }
+
+    registryRef.current[existing] = {
+      ...previous,
+      element,
+    };
+  }, []);
+
+  /**
+   * Roving keyboard: Arrow / Home / End over registration order (DOM mount order).
+   * Focus via stored ref; selection via `setValue` — no tablist querySelector.
+   */
+  const moveSelectionFromKeyboard = useCallback(
+    (fromValue: string, key: string) => {
+      const tabs = registryRef.current;
+      const index = tabs.findIndex((registration) => registration.value === fromValue);
+      if (index < 0 || 0 === tabs.length) {
+        return false;
+      }
+
+      let nextIndex: number | null = null;
+      switch (key) {
+        case "ArrowRight":
+          nextIndex = (index + 1) % tabs.length;
+          break;
+        case "ArrowLeft":
+          nextIndex = (index - 1 + tabs.length) % tabs.length;
+          break;
+        case "Home":
+          nextIndex = 0;
+          break;
+        case "End":
+          nextIndex = tabs.length - 1;
+          break;
+        default:
+          break;
+      }
+
+      if (null === nextIndex) {
+        return false;
+      }
+
+      const next = tabs[nextIndex];
+      if (!next) {
+        return false;
+      }
+
+      next.element?.focus();
+      setValue(next.value);
+      return true;
+    },
+    [setValue],
+  );
+
   const ctx = useMemo<TabsContextValue>(
     () => ({
       baseId,
@@ -220,16 +410,37 @@ const TabsRoot: React.FC<TabsRootProps> = ({
       value,
       setValue,
       registerTab,
+      setTabElement,
+      moveSelectionFromKeyboard,
       orientation: "horizontal",
       listLabel: ariaLabel,
       listLabelledBy: ariaLabelledBy,
     }),
-    [ariaLabel, ariaLabelledBy, baseId, registerTab, setValue, value, variant],
+    [
+      ariaLabel,
+      ariaLabelledBy,
+      baseId,
+      moveSelectionFromKeyboard,
+      registerTab,
+      setTabElement,
+      setValue,
+      value,
+      variant,
+    ],
   );
 
   return (
     <TabsProvider value={ctx}>
       <div {...otherProps} className={clsx(styles.Root, className)} data-variant={variant}>
+        {chromeActive && (
+          <TabsAutoAdvanceChrome
+            remainingMs={remainingMs}
+            intervalMs={resolvedInterval}
+            playback={playback}
+            onPause={handlePause}
+            onPlay={handlePlay}
+          />
+        )}
         {children}
       </div>
     </TabsProvider>
