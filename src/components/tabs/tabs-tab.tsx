@@ -42,16 +42,23 @@ export const TabsTab: React.FC<TabsTabProps> = ({
   const id = tabId(baseId, tabValue);
   const controls = panelId(baseId, tabValue);
   const tabRef = useRef<HTMLButtonElement>(null);
+  const { disabled, ...buttonProps } = otherProps;
 
   /** Register (and unregister) so Root can seed selection when children were not walkable. */
-  useLayoutEffect(() => registerTab(tabValue, { selected }), [registerTab, selected, tabValue]);
+  useLayoutEffect(
+    () => registerTab(tabValue, { selected, disabled: Boolean(disabled) }),
+    [disabled, registerTab, selected, tabValue],
+  );
 
   /** Keep the active tab visible in an overflowing list. */
   useLayoutEffect(() => {
     if (!isSelected) {
       return;
     }
-    tabRef.current?.scrollIntoView({ inline: "center", block: "nearest" });
+    const node = tabRef.current;
+    if (node && "function" === typeof node.scrollIntoView) {
+      node.scrollIntoView({ inline: "center", block: "nearest" });
+    }
   }, [isSelected]);
 
   /** Merge consumer `ref` with the internal node used for scroll-into-view. */
@@ -128,7 +135,8 @@ export const TabsTab: React.FC<TabsTabProps> = ({
 
   return (
     <button
-      {...otherProps}
+      {...buttonProps}
+      disabled={disabled}
       ref={assignRef}
       type="button"
       id={id}

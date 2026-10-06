@@ -4,6 +4,58 @@
   gap: var(--space-s);
 }
 
+.AutoAdvance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-s);
+}
+
+.Progress {
+  inline-size: 6.5rem;
+  block-size: 0.25rem;
+  margin: 0;
+  border: none;
+  appearance: none;
+  background-color: var(--global-muted);
+  accent-color: var(--global-primary);
+  transform-origin: inline-start center;
+  transform: scaleX(var(--tabs-auto-advance-ratio, 1));
+
+  &::-webkit-progress-bar {
+    background-color: var(--global-muted);
+  }
+
+  &::-webkit-progress-value {
+    background-color: var(--global-primary);
+  }
+
+  &::-moz-progress-bar {
+    background-color: var(--global-primary);
+  }
+}
+
+.Playback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  border: none;
+  padding: var(--space-3xs);
+  color: var(--global-primary);
+  background: transparent;
+  cursor: pointer;
+
+  &:focus {
+    outline: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--global-primary);
+    outline-offset: 2px;
+  }
+}
+
 .List {
   position: relative;
   display: flex;

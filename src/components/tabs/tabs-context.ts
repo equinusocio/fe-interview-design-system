@@ -11,7 +11,10 @@ export type TabsContextValue = {
   readonly value: string;
   readonly setValue: (next: string) => void;
   /** Mount-time registry; cleanup unregisters. */
-  readonly registerTab: (tabValue: string, opts: { selected?: boolean }) => () => void;
+  readonly registerTab: (
+    tabValue: string,
+    opts: { selected?: boolean; disabled?: boolean },
+  ) => () => void;
   readonly orientation: "horizontal";
   /** Root `aria-label` forwarded so List can name the tablist. */
   readonly listLabel?: string;
